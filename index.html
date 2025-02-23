@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text, Password, and Time Tools</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .tool {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 400px;
+            text-align: center;
+        }
+        .textarea-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+            resize: none;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #textStats, #passOutput, #diffResult {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+            text-align: left;
+        }
+        .copy-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #008CBA;
+            padding: 6px;
+            font-size: 14px;
+            border-radius: 3px;
+        }
+        .copy-btn:hover {
+            background-color: #007bb5;
+        }
+        .password-options, .diff-options {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .password-options label, .diff-options label {
+            display: block;
+            margin: 5px 0;
+        }
+        #generateBtn, #calcDiffBtn {
+            background-color: #ff9800;
+            display: block;
+            margin: 10px auto;
+        }
+        #generateBtn:hover, #calcDiffBtn:hover {
+            background-color: #e68a00;
+        }
+        .diff-inputs select, .diff-inputs input[type="date"] {
+            padding: 5px;
+            margin: 5px 2px;
+            width: 60px;
+            box-sizing: border-box;
+        }
+        .diff-inputs input[type="date"] {
+            width: 150px;
+        }
+        .diff-inputs {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Text Tool -->
+        <div class="tool">
+            <h2>Text Tool</h2>
+            <div class="textarea-wrapper">
+                <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+                <button class="copy-btn" onclick="copyText()" title="Copy Text"><i class="fas fa-copy"></i></button>
+            </div>
+            <div>
+                <button onclick="textToUpperCase()">To Uppercase</button>
+                <button onclick="textToTitleCase()">To Title Case</button>
+            </div>
+            <div id="textStats">
+                Total Characters: 0<br>
+                Letters: 0<br>
+                Numbers: 0<br>
+                Special Characters: 0
+            </div>
+        </div>
+
+        <!-- Password Generator Tool -->
+        <div class="tool">
+            <h2>Password Generator</h2>
+            <div class="textarea-wrapper">
+                <textarea id="passOutput" placeholder="Generated password will appear here..." readonly></textarea>
+                <button class="copy-btn" onclick="copyPassword()" title="Copy Password"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="password-options">
+                <label><input type="checkbox" id="useLower" checked> Lowercase (a-z)</label>
+                <label><input type="checkbox" id="useUpper" checked> Uppercase (A-Z)</label>
+                <label><input type="checkbox" id="useNumbers" checked> Numbers (0-9)</label>
+                <label><input type="checkbox" id="useSpecial" checked> Special (!@#$%^&*)</label>
+                <label>Length: <input type="number" id="passLength" value="12" min="1" max="50" style="width: 50px;"></label>
+                <button id="generateBtn" onclick="generatePassword()">Generate Password</button>
+            </div>
+        </div>
+
+        <!-- Time Calculator Tool -->
+        <div class="tool">
+            <h2>Time Calculator</h2>
+            <div class="diff-options">
+                <div class="diff-inputs">
+                    <select id="time1Hours"></select>
+                    <select id="time1Minutes"></select>
+                    <select id="time1Seconds"></select>
+                    <br>
+                    <select id="time2Hours"></select>
+                    <select id="time2Minutes"></select>
+                    <select id="time2Seconds"></select>
+                    <div id="dateInputs" style="display: none;">
+                        <input type="date" id="date1">
+                        <input type="date" id="date2">
+                    </div>
+                </div>
+                <label><input type="radio" name="diffType" value="time" checked onclick="toggleInputs('time')"> Time</label>
+                <label><input type="radio" name="diffType" value="date" onclick="toggleInputs('date')"> Date</label>
+                <button id="calcDiffBtn" onclick="calculateDifference()">Calculate</button>
+            </div>
+            <div id="diffResult">Result: -</div>
+        </div>
+    </div>
+
+    <script>
+        // Text Tool Functions
+        const textInput = document.getElementById('textInput');
+        const textStats = document.getElementById('textStats');
+
+        function updateTextStats() {
+            const text = textInput.value;
+            const totalChars = text.length;
+            const letters = (text.match(/[a-zA-Z]/g) || []).length;
+            const numbers = (text.match(/[0-9]/g) || []).length;
+            const specialChars = totalChars - letters - numbers - (text.match(/\s/g) || []).length;
+
+            textStats.innerHTML = `
+                Total Characters: ${totalChars}<br>
+                Letters: ${letters}<br>
+                Numbers: ${numbers}<br>
+                Special Characters: ${specialChars}
+            `;
+        }
+
+        function textToUpperCase() {
+            textInput.value = textInput.value.toUpperCase();
+            updateTextStats();
+        }
+
+        function textToTitleCase() {
+            textInput.value = textInput.value
+                .toLowerCase()
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            updateTextStats();
+        }
+
+        function copyText() {
+            textInput.select();
+            navigator.clipboard.writeText(textInput.value)
+                .then(() => alert('Text copied to clipboard!'))
+                .catch(err => alert('Failed to copy text: ' + err));
+        }
+
+        textInput.addEventListener('input', updateTextStats);
+
+        // Password Generator Functions
+        const passOutput = document.getElementById('passOutput');
+
+        function generatePassword() {
+            const useLower = document.getElementById('useLower').checked;
+            const useUpper = document.getElementById('useUpper').checked;
+            const useNumbers = document.getElementById('useNumbers').checked;
+            const useSpecial = document.getElementById('useSpecial').checked;
+            const passLength = parseInt(document.getElementById('passLength').value);
+
+            const lowerChars = 'abcdefghijklmnopqrstuvwxyz';
+            const upperChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const numberChars = '0123456789';
+            const specialChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+            let charPool = '';
+            if (useLower) charPool += lowerChars;
+            if (useUpper) charPool += upperChars;
+            if (useNumbers) charPool += numberChars;
+            if (useSpecial) charPool += specialChars;
+
+            if (charPool === '') {
+                alert('Please select at least one character type!');
+                return;
+            }
+
+            if (passLength < 1 || passLength > 50) {
+                alert('Password length must be between 1 and 50!');
+                return;
+            }
+
+            let password = '';
+            for (let i = 0; i < passLength; i++) {
+                const randomIndex = Math.floor(Math.random() * charPool.length);
+                password += charPool[randomIndex];
+            }
+
+            passOutput.value = password;
+        }
+
+        function copyPassword() {
+            passOutput.select();
+            navigator.clipboard.writeText(passOutput.value)
+                .then(() => alert('Password copied to clipboard!'))
+                .catch(err => alert('Failed to copy password: ' + err));
+        }
+
+        // Time Calculator Functions
+        const diffResult = document.getElementById('diffResult');
+        const date1Input = document.getElementById('date1');
+        const date2Input = document.getElementById('date2');
+
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        date1Input.value = today;
+        date2Input.value = today;
+
+        // Populate time dropdowns
+        function populateDropdown(id, max, placeholder) {
+            const select = document.getElementById(id);
+            const option = document.createElement('option');
+            option.value = '';
+            option.text = placeholder;
+            select.appendChild(option);
+            for (let i = 0; i < max; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = i.toString().padStart(2, '0');
+                select.appendChild(opt);
+            }
+        }
+
+        populateDropdown('time1Hours', 24, 'HH');
+        populateDropdown('time1Minutes', 60, 'MM');
+        populateDropdown('time1Seconds', 60, 'SS');
+        populateDropdown('time2Hours', 24, 'HH');
+        populateDropdown('time2Minutes', 60, 'MM');
+        populateDropdown('time2Seconds', 60, 'SS');
+
+        function toggleInputs(type) {
+            const timeInputs = document.querySelectorAll('#time1Hours, #time1Minutes, #time1Seconds, #time2Hours, #time2Minutes, #time2Seconds');
+            const dateInputs = document.getElementById('dateInputs');
+            if (type === 'time') {
+                timeInputs.forEach(input => input.style.display = 'inline-block');
+                dateInputs.style.display = 'none';
+            } else {
+                timeInputs.forEach(input => input.style.display = 'none');
+                dateInputs.style.display = 'block';
+            }
+        }
+
+        function calculateDifference() {
+            const diffType = document.querySelector('input[name="diffType"]:checked').value;
+
+            if (diffType === 'time') {
+                const h1 = document.getElementById('time1Hours').value;
+                const m1 = document.getElementById('time1Minutes').value;
+                const s1 = document.getElementById('time1Seconds').value;
+                const h2 = document.getElementById('time2Hours').value;
+                const m2 = document.getElementById('time2Minutes').value;
+                const s2 = document.getElementById('time2Seconds').value;
+
+                // Check if any field is unselected (empty string)
+                if ([h1, m1, s1, h2, m2, s2].includes('')) {
+                    diffResult.textContent = 'Result: Please select all time fields!';
+                    return;
+                }
+
+                // Convert to total seconds
+                const time1Seconds = parseInt(h1) * 3600 + parseInt(m1) * 60 + parseInt(s1);
+                const time2Seconds = parseInt(h2) * 3600 + parseInt(m2) * 60 + parseInt(s2);
+
+                // Calculate difference, handling midnight wraparound
+                let diffSeconds = time2Seconds - time1Seconds;
+                if (diffSeconds < 0) {
+                    diffSeconds += 24 * 3600; // Add 24 hours if negative
+                }
+
+                const diffStr = formatTimeDiff(diffSeconds * 1000);
+                diffResult.textContent = `Result: ${diffStr}`;
+            } else if (diffType === 'date') {
+                const date1 = date1Input.value;
+                const date2 = date2Input.value;
+
+                if (!date1 || !date2) {
+                    diffResult.textContent = 'Result: Please select both dates!';
+                    return;
+                }
+
+                const d1 = new Date(date1);
+                const d2 = new Date(date2);
+                const diffMs = d2 - d1;
+                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                diffResult.textContent = `Result: ${days} days`;
+            }
+        }
+
+        function formatTimeDiff(diffMs) {
+            const absDiff = Math.abs(diffMs);
+            const hours = Math.floor(absDiff / (1000 * 60 * 60));
+            const minutes = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((absDiff % (1000 * 60)) / 1000);
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        // Initialize with time inputs visible
+        toggleInputs('time');
+    </script>
+</body>
+</html>
